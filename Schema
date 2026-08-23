@@ -1,0 +1,35 @@
+CREATE TABLE Department (
+    dept_id VARCHAR(5) PRIMARY KEY,
+    dept_name VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE Student (
+    roll_no VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    dept_id INT,
+    cgpa FLOAT,
+    back INT DEFAULT 0,
+    graduation_year INT,
+    is_placed BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+);
+
+CREATE TABLE Company (
+    company_id INT PRIMARY KEY,
+    company_name VARCHAR(100) NOT NULL,
+    hr_name VARCHAR(100),
+    hr_email VARCHAR(100)
+);
+
+CREATE TABLE Job (
+    job_id INT PRIMARY KEY,
+    company_id INT,
+    job_title VARCHAR(100) NOT NULL,
+    ctc_lpa FLOAT,
+    min_cgpa FLOAT DEFAULT 0,
+    eligible_branch VARCHAR(200),
+    application_deadline DATE,
+    FOREIGN KEY (company_id) REFERENCES Company(company_id)
+);
+
