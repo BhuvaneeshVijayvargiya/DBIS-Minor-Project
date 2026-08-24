@@ -1,34 +1,46 @@
-# College Placement Management System — Schema Report
+# IIT Indore Placement Database System (DBIS Minor Project)
 
-## What this project does
-This database keeps track of everything involved in campus placements: which students exist, which companies come to recruit, what jobs they post, and how each student's application moves forward.
+A relational database system built using MySQL/MariaDB to model and automate the campus placement pipeline at IIT Indore. This project manages relational workflows spanning student records, department details, recruiting companies, placement drives, eligibility criteria, applications, multi-round selection processes, and final offer letters.
 
-## The Tables
+---
 
-**Department** — Stores the branches in the college, like Computer Science or Mechanical. Each department has an ID (`dept_id`, a short code like `CSE`) and a name.
+## Features & Highlights
 
-**Student** — Stores each student's details: their roll number (`roll_no`), name, email, which department they belong to, their CGPA, how many active backlogs they have (`back`), their graduation year, and whether they've already been placed (`is_placed`).
+* **Complete Relational Schema**: Includes 10 interconnecting tables designed with strict integrity constraints (`FOREIGN KEY`, `CASCADE`/`SET NULL` rules, and `CHECK` logic).
+* **Realistic Campus Data Generation**: Pre-loaded with synthetic data reflecting IIT Indore's student distribution across key branches (CSE, EE, Mechanical, Civil, and Mathematics & Computing).
+* **Data-Driven Workflow**: Simulates real-world recruitment logic where applications, multi-stage selection rounds (Aptitude, GD, Technical, HR), and offers are contingent on specific company eligibility rules (min CGPA, backlog limits, branch restrictions).
+* **Idempotent Setup**: Includes wrapper scripts to clear existing tables safely and initialize/re-run setups seamlessly.
 
-**Company** — Stores basic info about a recruiting company: its ID, name, and HR contact details.
+---
 
-**Job** — Stores a job opening posted by a company: the role title, salary (`ctc_lpa`), the minimum CGPA required, which branches are eligible, and the application deadline.
+## Database Schema Overview
 
-*(Two more tables, `Application` and `Interview`, complete the picture — they record which student applied to which job, and the result of each interview round.)*
+The database contains the following 10 relational entities:
 
-## How the tables connect
-Think of it like a chain:
-- A **Student** belongs to one **Department**.
-- A **Job** is posted by one **Company**.
-- A **Student** applies to a **Job** → this creates an **Application**.
-- Each **Application** can have one or more **Interview** rounds with a result.
+| Table | Description |
+| :--- | :--- |
+| **`Department`** | Tracks academic branches, department codes, HOD names, and total enrollment count. |
+| **`Placement_Officer`** | Stores contact details and designations of placement cell coordinators. |
+| **`Company`** | Stores recruiting company details, industry type, and HR contacts. |
+| **`Student`** | Contains student academic records, CGPA, backlogs, percentages, and department mapping. |
+| **`Placement_Drive`** | Details job profiles, offered CTC/stipend, vacancies, drive modes, and drive dates. |
+| **`Eligibility_Criteria`** | Stores drive-specific requirements (min CGPA, max backlogs, eligible branches). |
+| **`Application`** | Maps student applications to drives along with real-time status tracking. |
+| **`Selection_Round`** | Tracks sequential selection rounds (Aptitude, Technical, HR, etc.) for each drive. |
+| **`Round_Result`** | Stores candidate scores, pass/fail status, and reviewer remarks per round. |
+| **`Offer`** | Stores official offer letters extended to candidates, tracking acceptance status. |
 
-This is why some columns are called **foreign keys** — for example, `dept_id` inside the `Student` table isn't the student's own data, it's a *link* pointing back to a row in the `Department` table. This avoids repeating the full department name for every single student.
+---
 
-## Why some choices were made
-- **Primary Key** (e.g. `roll_no`, `company_id`) — a column that uniquely identifies each row, so no two students or companies can be confused with each other.
-- **NOT NULL** — means that field can't be left empty (e.g. every student must have a name).
-- **UNIQUE** — no two rows can share the same value (e.g. two students can't have the same email).
-- **DEFAULT** — an automatic starting value if nothing is entered (e.g. `back` starts at 0, `is_placed` starts as false).
+## Getting Started
 
-## In short
-This schema is small enough to build and demo easily, but it still reflects a real placement process: departments organize students, companies post jobs, students apply, and applications move through interview rounds toward a final result.
+### Prerequisites
+* **MySQL** (v8.0.16 or higher recommended for full `CHECK` constraint enforcement) or **MariaDB**.
+* MySQL CLI or a client tool like MySQL Workbench / DBeaver.
+
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/BhuvaneeshVijayvargiya/DBIS-Minor-Project.git](https://github.com/BhuvaneeshVijayvargiya/DBIS-Minor-Project.git)
+   cd DBIS-Minor-Project
