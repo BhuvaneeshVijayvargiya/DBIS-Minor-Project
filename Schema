@@ -1,35 +1,170 @@
+CREATE DATABASE CampusHire;
+USE CampusHire;
+SET SQL_SAFE_UPDATES = 0;
+
+
 CREATE TABLE Department (
-    dept_id VARCHAR(5) PRIMARY KEY,
-    dept_name VARCHAR(100) NOT NULL
+    dept_id         INT PRIMARY KEY AUTO_INCREMENT,
+    dept_name       VARCHAR(100) NOT NULL UNIQUE,
+    dept_code       VARCHAR(20) NOT NULL UNIQUE,
+    hod_name        VARCHAR(100),
+    total_students  INT DEFAULT 0
 );
 
-CREATE TABLE Student (
-    roll_no VARCHAR(20) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    dept_id INT,
-    cgpa FLOAT,
-    back INT DEFAULT 0,
-    graduation_year INT,
-    is_placed BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+CREATE TABLE Placement_Officer (
+    officer_id   INT PRIMARY KEY AUTO_INCREMENT,
+    name         VARCHAR(100) NOT NULL,
+    designation  VARCHAR(100),
+    email        VARCHAR(100) UNIQUE,
+    phone        VARCHAR(15)
 );
 
 CREATE TABLE Company (
-    company_id INT PRIMARY KEY,
-    company_name VARCHAR(100) NOT NULL,
-    hr_name VARCHAR(100),
-    hr_email VARCHAR(100)
+    company_id        INT PRIMARY KEY AUTO_INCREMENT,
+    company_name      VARCHAR(150) NOT NULL,
+    industry_type     VARCHAR(100),
+    website           VARCHAR(255),
+    hr_contact_name   VARCHAR(100),
+    hr_contact_email  VARCHAR(100),
+    hr_contact_phone  VARCHAR(15),
+    address           VARCHAR(255)
 );
 
-CREATE TABLE Job (
-    job_id INT PRIMARY KEY,
-    company_id INT,
-    job_title VARCHAR(100) NOT NULL,
-    ctc_lpa FLOAT,
-    min_cgpa FLOAT DEFAULT 0,
-    eligible_branch VARCHAR(200),
-    application_deadline DATE,
-    FOREIGN KEY (company_id) REFERENCES Company(company_id)
+CREATE TABLE Student (
+    roll_no           INT PRIMARY KEY AUTO_INCREMENT,
+    enrollment_no      VARCHAR(20) NOT NULL UNIQUE,
+    name               VARCHAR(100) NOT NULL,
+    email              VARCHAR(100) NOT NULL UNIQUE,
+    phone              VARCHAR(15) NOT NULL,
+    dob                DATE NOT NULL,
+    gender             ENUM('Male', 'Female', 'Other'),
+    address            VARCHAR(255),
+    dept_id            INT,
+    dept_name          VARCHAR(100),
+    current_year_sem   VARCHAR(10),
+    cgpa               DECIMAL(4,2) NOT NULL CHECK (cgpa BETWEEN 0 AND 10),
+    backlog_count      INT DEFAULT 0,
+    percentage_10th    DECIMAL(5,2),
+    percentage_12th    DECIMAL(5,2),
+    resume_link        VARCHAR(255),
+
+    CONSTRAINT fk_student_dept
+        FOREIGN KEY (dept_id) REFERENCES Department(dept_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
 );
 
+CREATE TABLE Placement_Drive (
+    drive_id         INT PRIMARY KEY AUTO_INCREMENT,
+    company_id       INT NOT NULL,
+    officer_id       INT,
+    job_title        VARCHAR(150) NOT NULL,
+    job_description  TEXT,
+    offer_type       ENUM('Full-Time', 'Internship', 'Internship+FTE'),
+    package_offered  DECIMAL(10,2) NOT NULL,
+    vacancies        INT,
+    mode             ENUM('On-Campus', 'Off-Campus', 'Virtual'),
+    drive_date       DATE NOT NULL,
+
+    CONSTRAINT fk_drive_company
+        FOREIGN KEY (company_id) REFERENCES Company(company_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_drive_officer
+        FOREIGN KEY (officer_id) REFERENCES Placement_Officer(officer_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+);
+
+CREATE TABLE Eligibility_Criteria (
+    eligibility_id       INT PRIMARY KEY AUTO_INCREMENT,
+    drive_id             INT NOT NULL UNIQUE,
+    min_cgpa             DECIMAL(4,2),
+    max_backlogs         INT,
+    eligible_departments VARCHAR(255),
+    min_10th_percentage  DECIMAL(5,2),
+    min_12th_percentage  DECIMAL(5,2),
+
+    CONSTRAINT fk_eligibility_drive
+        FOREIGN KEY (drive_id) REFERENCES Placement_Drive(drive_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE TABLE Application (
+    application_id    INT PRIMARY KEY AUTO_INCREMENT,
+    student_id        INT NOT NULL,
+    drive_id          INT NOT NULL,
+    application_date  DATE NOT NULL,
+    status            ENUM('Applied', 'Shortlisted', 'Rejected', 'Withdrawn') DEFAULT 'Applied',
+
+    CONSTRAINT fk_application_student
+        FOREIGN KEY (student_id) REFERENCES Student(roll_no)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_application_drive
+        FOREIGN KEY (drive_id) REFERENCES Placement_Drive(drive_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_student_drive UNIQUE (student_id, drive_id)
+);
+
+CREATE TABLE Selection_Round (
+    round_id    INT PRIMARY KEY AUTO_INCREMENT,
+    drive_id    INT NOT NULL,
+    round_no    INT NOT NULL,
+    round_type  ENUM('Aptitude Test', 'GD', 'Technical Interview', 'HR Interview'),
+    round_date  DATE,
+    mode        VARCHAR(50),
+    venue       VARCHAR(150),
+
+    CONSTRAINT fk_round_drive
+        FOREIGN KEY (drive_id) REFERENCES Placement_Drive(drive_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_drive_round UNIQUE (drive_id, round_no)
+);
+
+CREATE TABLE Round_Result (
+    result_id    INT PRIMARY KEY AUTO_INCREMENT,
+    student_id   INT NOT NULL,
+    round_id     INT NOT NULL,
+    outcome      ENUM('Pass', 'Fail', 'On-Hold'),
+    score        DECIMAL(5,2),
+    remarks      VARCHAR(255),
+
+    CONSTRAINT fk_result_student
+        FOREIGN KEY (student_id) REFERENCES Student(roll_no)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_result_round
+        FOREIGN KEY (round_id) REFERENCES Selection_Round(round_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_student_round UNIQUE (student_id, round_id)
+);
+
+CREATE TABLE Offer (
+    offer_id         INT PRIMARY KEY AUTO_INCREMENT,
+    student_id       INT NOT NULL,
+    drive_id         INT NOT NULL,
+    package_offered  DECIMAL(10,2) NOT NULL,
+    offer_date       DATE NOT NULL,
+    offer_status     ENUM('Pending', 'Accepted', 'Declined') DEFAULT 'Pending',
+
+    CONSTRAINT fk_offer_student
+        FOREIGN KEY (student_id) REFERENCES Student(roll_no)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_offer_drive
+        FOREIGN KEY (drive_id) REFERENCES Placement_Drive(drive_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
